@@ -1,0 +1,1 @@
+# go-dirty-workspace
