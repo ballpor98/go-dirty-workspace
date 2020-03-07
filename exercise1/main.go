@@ -3,61 +3,70 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
-// Photo Photo struct
+type Album struct {
+	UserID int    `json:"userId"`
+	ID     int    `json:"id"`
+	Title  string `json:"title"`
+}
+
 type Photo struct {
 	AlbumID      int    `json:"albumId"`
 	ID           int    `json:"id"`
 	Title        string `json:"title"`
 	URL          string `json:"url"`
-	ThumbnailURL string `json:"thumbnaiUrl"`
+	ThumbnailURL string `json:"thumbnailUrl"`
 }
 
-// Doer Do interface
 type Doer interface {
-	Do(string) (*http.Response, error)
-	Dont()
+	Do(url string) (*http.Response, error)
 }
 
-// DoGet a
 type DoGet struct {
 	Doer
 }
 
-// Do a
-func (t DoGet) Do(url string) (*http.Response, error) {
+func (d DoGet) Do(url string) (*http.Response, error) {
 	return http.Get(url)
 }
 
-// getTypicode a
 type getTypicode struct {
-	client Doer
 	url    string
+	client Doer
 }
 
-// GetPhoto get photo data
-func (t getTypicode) GetPhoto(p *[]Photo) error {
-	resp2, err := t.client.Do(t.url)
+func (tc getTypicode) Get(p interface{}) error {
+	resp, err := tc.client.Do(tc.url)
 	if err != nil {
 		return err
 	}
-	defer resp2.Body.Close()
-	return json.NewDecoder(resp2.Body).Decode(p)
+	defer resp.Body.Close()
+
+	return json.NewDecoder(resp.Body).Decode(p)
+}
+
+func NewTypicode(path string) getTypicode {
+	return getTypicode{
+		url:    "https://jsonplaceholder.typicode.com" + path,
+		client: DoGet{},
+	}
 }
 
 func main() {
-	photo := []Photo{}
-	t := getTypicode{
-		client: DoGet{},
-		url:    "https://jsonplaceholder.typicode.com/photos",
-	}
-	err := t.GetPhoto(&photo)
+	p := []Photo{}
+	t := NewTypicode("/photos")
+	err := t.Get(&p)
+
+	tc := NewTypicode("/albums")
+	a := []Album{}
+	err = tc.Get(&a)
+
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
-	fmt.Println(photo)
-	return
+
+	fmt.Println(p)
 }
