@@ -1,4 +1,4 @@
-module go-dirty-server
+module go-dirty-workspace
 
 go 1.14
 
